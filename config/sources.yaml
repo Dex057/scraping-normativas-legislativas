@@ -1,0 +1,101 @@
+# Configuração das fontes monitoradas pelo Pedido 01.
+#
+# Cada fonte é um dicionário com:
+#   id:          identificador único e estável (usado para dedup/histórico — não mudar depois de criado)
+#   nome:        nome legível da fonte
+#   categoria:   nacional_extrajudicial | legislativo | estadual_anoreg | estadual_tj | estadual_corregedoria
+#   estado:      sigla UF (só para categorias estaduais; null para nacionais)
+#   url:         página a ser varrida (ideal: página de "notícias", "atos normativos" ou "provimentos")
+#   ativo:       true/false — permite desativar uma fonte problemática sem removê-la do histórico
+#   modo:        "estatico" (requests/BeautifulSoup) | "js" (Playwright, para sites com conteúdo renderizado via JS)
+#
+# As fontes estaduais estão como placeholder (url: null) — precisam de pesquisa individual
+# por estado (seccional da Anoreg, Tribunal de Justiça, Corregedoria Geral de Justiça).
+# Ver TODO_FONTES_ESTADUAIS.md para o checklist de pesquisa.
+
+fontes:
+  # ── Nacional / Extrajudicial ──────────────────────────────────────────
+  - id: cnj
+    nome: "CNJ — Conselho Nacional de Justiça"
+    categoria: nacional_extrajudicial
+    estado: null
+    url: "https://www.cnj.jus.br/category/noticias/"
+    ativo: true
+    modo: estatico
+    # Nota: https://atos.cnj.jus.br/atos é o repositório oficial de atos normativos
+    # (mais preciso que a página de notícias), mas é uma SPA que carrega a tabela via
+    # JS/API sob demanda — não renderiza nem com Playwright + esperar "networkidle".
+    # Ficou como TODO: chamar a API JSON que alimenta essa tabela diretamente
+    # (inspecionar a aba Network do navegador para achar o endpoint).
+
+  - id: anoreg_br
+    nome: "Anoreg-BR"
+    categoria: nacional_extrajudicial
+    estado: null
+    url: "https://www.anoreg.org.br/site/category/noticias/"
+    ativo: true
+    modo: estatico
+
+  - id: irib
+    nome: "IRIB — Instituto de Registro Imobiliário do Brasil"
+    categoria: nacional_extrajudicial
+    estado: null
+    url: "https://irib.org.br/noticias"
+    ativo: true
+    modo: estatico
+
+  - id: arpen_brasil
+    nome: "Arpen-Brasil"
+    categoria: nacional_extrajudicial
+    estado: null
+    url: "https://www.arpenbrasil.org.br/noticias/"
+    ativo: true
+    modo: estatico
+
+  - id: colegio_notarial_brasil
+    nome: "Colégio Notarial do Brasil - Conselho Federal"
+    categoria: nacional_extrajudicial
+    estado: null
+    url: "https://www.notariado.org.br/noticias/"
+    ativo: true
+    modo: estatico
+
+  # ── Legislativo ────────────────────────────────────────────────────────
+  - id: planalto
+    nome: "Portal do Planalto — Atos Normativos"
+    categoria: legislativo
+    estado: null
+    url: "https://www.gov.br/planalto/pt-br/acesso-a-informacao/institucional/atos-normativos"
+    ativo: true
+    modo: estatico
+
+  # ── Estadual — placeholders (a preencher, 27 estados + DF) ─────────────
+  # Estrutura repetida para cada UF: <uf>_anoreg, <uf>_tj, <uf>_corregedoria
+  # Exemplo (São Paulo) já com URLs conhecidas como referência de formato:
+  - id: sp_anoreg
+    nome: "Anoreg-SP"
+    categoria: estadual_anoreg
+    estado: SP
+    url: "https://www.anoregsp.org.br/"
+    ativo: true
+    modo: estatico
+
+  - id: sp_tj
+    nome: "TJSP — Comunicados/Provimentos"
+    categoria: estadual_tj
+    estado: SP
+    url: null # TODO: mapear página de comunicados/provimentos do TJSP
+    ativo: false
+    modo: estatico
+
+  - id: sp_corregedoria
+    nome: "Corregedoria Geral de Justiça — SP"
+    categoria: estadual_corregedoria
+    estado: SP
+    url: null # TODO: mapear página de provimentos da CGJ-SP
+    ativo: false
+    modo: estatico
+
+  # TODO: repetir o bloco acima para as demais 26 UFs (AC, AL, AM, AP, BA, CE, DF,
+  # ES, GO, MA, MG, MS, MT, PA, PB, PE, PI, PR, RJ, RN, RO, RR, RS, SC, SE, TO)
+  # Cada UF ativa depois de ter as 3 URLs mapeadas e validadas manualmente uma vez.

@@ -1,0 +1,41 @@
+name: Varredura quinzenal de normativas
+
+on:
+  schedule:
+    # Executa às 07:00 UTC (04:00 horário de Brasília) no dia 1 e 16 de cada mês
+    # — aproximação prática de "a cada 15 dias" usando cron (que não suporta
+    # intervalos fixos de N dias diretamente).
+    - cron: "0 7 1,16 * *"
+  workflow_dispatch: {} # permite disparar manualmente pela aba Actions do GitHub
+
+permissions:
+  contents: write # necessário para o commit automático do banco de volta ao repo
+
+jobs:
+  varredura:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Rodar o ciclo de varredura e extração
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python -m src.orchestrator
+
+      - name: Commitar o banco atualizado de volta ao repositório
+        run: |
+          git config user.name "normativas-bot"
+          git config user.email "actions@github.com"
+          git add data/normativas.db
+          git diff --cached --quiet || git commit -m "chore: atualiza digest de normativas [skip ci]"
+          git push

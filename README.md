@@ -1,0 +1,70 @@
+# Pedido 01 — Monitoramento e Curadoria de Atualizações Normativas e Legislativas
+
+Automação quinzenal que varre fontes nacionais, legislativas e estaduais em
+busca de novos atos normativos, extrai os achados via IA (Claude Haiku 4.5) e
+disponibiliza um painel de triagem para validação manual.
+
+## Arquitetura
+
+```
+config/sources.yaml      → lista de fontes monitoradas (nacional + 27 UF + DF)
+src/fetch.py              → busca a página e limpa o HTML (preserva links)
+src/extract.py            → Claude Haiku 4.5 extrai achados estruturados (JSON Schema)
+src/db.py                 → SQLite: achados, execuções, dedup, status de triagem
+src/orchestrator.py       → roda o ciclo completo (chamado pelo GitHub Actions)
+app.py                    → painel Streamlit de triagem (human-in-the-loop)
+.github/workflows/scrape.yml → agenda a execução a cada 15 dias
+```
+
+**Por que IA em vez de um parser por site?** Escrever e manter um parser
+CSS/XPath para cada uma das ~80+ fontes (Anoreg seccional, TJ e Corregedoria
+de 27 estados + DF, mais as fontes nacionais) é o gargalo real do projeto —
+não o custo de API. `fetch.py` cuida da parte mecânica (buscar e limpar a
+página); `extract.py` manda o texto limpo para o Claude Haiku 4.5, que devolve
+os achados já estruturados via *structured outputs*. Isso é resiliente a
+mudanças de layout dos sites e elimina a necessidade de 80+ parsers
+específicos. Custo estimado: **menos de US$ 3/mês** para o ciclo completo.
+
+## Persistência e deploy
+
+- O banco (`data/normativas.db`) é versionado no próprio repositório. O
+  GitHub Actions atualiza e faz commit dele de volta a cada execução.
+- O painel roda no **Streamlit Community Cloud**, apontando para este
+  repositório — cada push (incluindo o commit automático do bot) dispara um
+  redeploy automático, então o painel sempre reflete o último ciclo.
+
+## Configuração necessária
+
+1. **Secret no GitHub**: `ANTHROPIC_API_KEY` (Settings → Secrets → Actions).
+2. **Streamlit Community Cloud**: conectar este repositório, apontar para
+   `app.py`.
+3. **Mapear as fontes estaduais**: `config/sources.yaml` tem só um exemplo
+   (SP) preenchido — ver `TODO_FONTES_ESTADUAIS.md` para o checklist de
+   pesquisa das ~80 URLs restantes (Anoreg seccional + TJ + Corregedoria de
+   cada UF).
+
+## Rodando localmente
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+export ANTHROPIC_API_KEY=sk-ant-...
+
+# Roda um ciclo de coleta manualmente
+python -m src.orchestrator
+
+# Abre o painel de triagem
+streamlit run app.py
+```
+
+## Status do escopo (Pedido 01)
+
+- [x] Arquitetura de coleta + extração via IA
+- [x] Persistência com deduplicação
+- [x] Painel de triagem (Streamlit)
+- [x] Agendamento quinzenal (GitHub Actions)
+- [x] Fontes nacionais/legislativas mapeadas (CNJ, Anoreg-BR, IRIB,
+      Arpen-Brasil, Colégio Notarial do Brasil, Planalto)
+- [ ] Fontes estaduais — 1 de 27+DF mapeada (SP, parcial); restante pendente
+      de pesquisa (ver `TODO_FONTES_ESTADUAIS.md`)
+- [ ] Validação em produção do primeiro ciclo real
