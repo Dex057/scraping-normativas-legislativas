@@ -1,0 +1,1293 @@
+<title>Validação de Fontes — Monitoramento de Normativas</title>
+<style>
+  :root {
+    --bg: #F4F5F8;
+    --surface: #FFFFFF;
+    --surface-alt: #EBEDF3;
+    --ink: #1C2333;
+    --ink-muted: #5B6478;
+    --border: #DADFE8;
+    --accent: #2B3E6B;
+    --accent-soft: #E4E9F5;
+    --success: #1F7A4D;
+    --success-soft: #E3F3EA;
+    --warning: #A6650C;
+    --warning-soft: #FBF0DC;
+    --critical: #B23A3A;
+    --critical-soft: #FBE7E7;
+    --font-display: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10141F;
+      --surface: #171D2C;
+      --surface-alt: #1F2637;
+      --ink: #E7EAF2;
+      --ink-muted: #9AA3B8;
+      --border: #2B3247;
+      --accent: #8CA0DC;
+      --accent-soft: #22304F;
+      --success: #4FBE84;
+      --success-soft: #163726;
+      --warning: #E0A73B;
+      --warning-soft: #3A2C10;
+      --critical: #E27272;
+      --critical-soft: #3A1E1E;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10141F;
+    --surface: #171D2C;
+    --surface-alt: #1F2637;
+    --ink: #E7EAF2;
+    --ink-muted: #9AA3B8;
+    --border: #2B3247;
+    --accent: #8CA0DC;
+    --accent-soft: #22304F;
+    --success: #4FBE84;
+    --success-soft: #163726;
+    --warning: #E0A73B;
+    --warning-soft: #3A2C10;
+    --critical: #E27272;
+    --critical-soft: #3A1E1E;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px 96px; }
+
+  header.masthead {
+    background: linear-gradient(180deg, var(--accent-soft), transparent);
+    border-bottom: 1px solid var(--border);
+    padding: 56px 24px 32px;
+    margin-bottom: 40px;
+  }
+  header.masthead .wrap { padding: 0; }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 12px;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.7rem, 3.2vw, 2.4rem);
+    font-weight: 400;
+    margin: 0 0 14px;
+    text-wrap: balance;
+    color: var(--ink);
+  }
+  .lede {
+    max-width: 68ch;
+    color: var(--ink-muted);
+    font-size: 1.02rem;
+    margin: 0 0 28px;
+  }
+
+  .stat-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    min-width: 150px;
+  }
+  .stat .n {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 1.6rem;
+    font-weight: 600;
+    line-height: 1;
+  }
+  .stat .label {
+    font-size: 0.82rem;
+    color: var(--ink-muted);
+    margin-top: 4px;
+  }
+  .stat.stat-success .n { color: var(--success); }
+  .stat.stat-warning .n { color: var(--warning); }
+  .stat.stat-critical .n { color: var(--critical); }
+
+  section { margin-bottom: 48px; }
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 1.35rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+    margin: 0 0 20px;
+  }
+
+  .legend {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    font-size: 0.86rem;
+    color: var(--ink-muted);
+    margin-bottom: 24px;
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+  #busca {
+    width: 100%;
+    max-width: 360px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+  }
+  #busca:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .cards-nacionais {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+  .cards-estaduais {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .card h3 {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 650;
+    margin: 0 0 4px;
+  }
+  .card-estado-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .uf-nome { font-weight: 400; color: var(--ink-muted); font-size: 0.88em; }
+  .uf-contagem {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.78rem;
+    color: var(--ink-muted);
+    white-space: nowrap;
+  }
+
+  .fonte-row {
+    padding: 10px 0;
+    border-top: 1px solid var(--border);
+  }
+  .fonte-row:first-of-type { border-top: none; padding-top: 6px; }
+  .fonte-row-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .fonte-tipo { font-size: 0.86rem; color: var(--ink-muted); }
+  .fonte-url {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    word-break: break-all;
+  }
+  .fonte-url a { text-decoration: none; }
+  .fonte-url a:hover { text-decoration: underline; }
+  .sem-url { color: var(--ink-muted); font-style: italic; font-size: 0.86rem; }
+  .nota {
+    font-size: 0.82rem;
+    color: var(--ink-muted);
+    margin: 6px 0 0;
+    padding: 8px 10px;
+    background: var(--surface-alt);
+    border-radius: 6px;
+  }
+
+  .pill {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 3px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .pill-success { background: var(--success-soft); color: var(--success); }
+  .pill-warning { background: var(--warning-soft); color: var(--warning); }
+  .pill-critical { background: var(--critical-soft); color: var(--critical); }
+
+  footer {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    color: var(--ink-muted);
+    font-size: 0.86rem;
+  }
+  footer a { color: var(--accent); }
+
+  .card-estado.hidden { display: none; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .card { transition: border-color 0.15s ease; }
+  }
+</style>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">Pedido 01 — Corpo Técnico AYIO</p>
+    <h1>Validação das fontes de monitoramento de atualizações normativas e legislativas</h1>
+    <p class="lede">
+      Lista de todos os portais que a automação quinzenal vai varrer em busca de atos
+      normativos, provimentos e publicações legislativas — Anoreg seccional, Tribunal de
+      Justiça e Corregedoria Geral de Justiça de cada estado, além das fontes nacionais.
+      As URLs foram levantadas e testadas automaticamente; pedimos a validação do jurídico
+      antes de ativar o ciclo de produção, especialmente nos itens marcados como
+      <strong>"Confirmar manualmente"</strong> ou <strong>"Não localizada"</strong>.
+    </p>
+    <div class="stat-bar">
+      <div class="stat"><div class="n">87</div><div class="label">fontes mapeadas</div></div>
+      <div class="stat stat-success"><div class="n">75</div><div class="label">confirmadas automaticamente</div></div>
+      <div class="stat stat-warning"><div class="n">7</div><div class="label">pendentes de confirmação manual</div></div>
+      <div class="stat stat-critical"><div class="n">5</div><div class="label">não localizadas</div></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section>
+    <h2>Nacional e Legislativo</h2>
+    <div class="legend">
+      <span><span class="pill pill-success">Confirmada</span> testada automaticamente, respondeu OK</span>
+      <span><span class="pill pill-warning">Confirmar manualmente</span> bloqueio ou erro na checagem automática</span>
+      <span><span class="pill pill-critical">Não localizada</span> nenhuma URL candidata encontrada</span>
+    </div>
+    <div class="cards-nacionais">
+      <div class="card card-nacional"><h3>CNJ — Conselho Nacional de Justiça</h3>
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Nacional — Extrajudicial</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.cnj.jus.br/category/noticias/" target="_blank" rel="noopener">https://www.cnj.jus.br/category/noticias/</a></div>
+        <p class="nota">Repositório oficial de atos normativos (atos.cnj.jus.br/atos) é uma SPA que carrega a tabela via JS/API sob demanda e não é resolvível com Playwright simples — usando a página de notícias como alternativa.</p>
+      </div></div>
+<div class="card card-nacional"><h3>Anoreg-BR</h3>
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Nacional — Extrajudicial</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.anoreg.org.br/site/category/noticias/" target="_blank" rel="noopener">https://www.anoreg.org.br/site/category/noticias/</a></div>
+        
+      </div></div>
+<div class="card card-nacional"><h3>IRIB — Instituto de Registro Imobiliário do Brasil</h3>
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Nacional — Extrajudicial</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://irib.org.br/noticias" target="_blank" rel="noopener">https://irib.org.br/noticias</a></div>
+        
+      </div></div>
+<div class="card card-nacional"><h3>Arpen-Brasil</h3>
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Nacional — Extrajudicial</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.arpenbrasil.org.br/noticias/" target="_blank" rel="noopener">https://www.arpenbrasil.org.br/noticias/</a></div>
+        
+      </div></div>
+<div class="card card-nacional"><h3>Colégio Notarial do Brasil - Conselho Federal</h3>
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Nacional — Extrajudicial</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.notariado.org.br/noticias/" target="_blank" rel="noopener">https://www.notariado.org.br/noticias/</a></div>
+        
+      </div></div>
+<div class="card card-nacional"><h3>Portal do Planalto — Atos Normativos</h3>
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Legislativo</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.gov.br/planalto/pt-br/acesso-a-informacao/institucional/atos-normativos" target="_blank" rel="noopener">https://www.gov.br/planalto/pt-br/acesso-a-informacao/institucional/atos-normativos</a></div>
+        
+      </div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Fontes estaduais — Anoreg seccional, Tribunal de Justiça e Corregedoria</h2>
+    <input type="search" id="busca" placeholder="Buscar por UF ou nome do estado…" autocomplete="off">
+    <div class="cards-estaduais" id="grade-estados">
+      
+      <article class="card card-estado" data-uf="AC" data-nome="acre">
+        <header class="card-estado-header">
+          <h3>AC <span class="uf-nome">— Acre</span></h3>
+          <span class="uf-contagem">2/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-critical">Não localizada</span>
+        </div>
+        <div class="fonte-url"><span class="sem-url">— sem URL candidata —</span></div>
+        <p class="nota">Não localizado site oficial — apenas página no Facebook (anoregacre).</p>
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjac.jus.br" target="_blank" rel="noopener">https://www.tjac.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjac.jus.br/corregedoria" target="_blank" rel="noopener">https://www.tjac.jus.br/corregedoria</a></div>
+        
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="AL" data-nome="alagoas">
+        <header class="card-estado-header">
+          <h3>AL <span class="uf-nome">— Alagoas</span></h3>
+          <span class="uf-contagem">3/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.anoreg-al.org.br" target="_blank" rel="noopener">https://www.anoreg-al.org.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjal.jus.br" target="_blank" rel="noopener">https://www.tjal.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjal.jus.br/corregedoria" target="_blank" rel="noopener">https://www.tjal.jus.br/corregedoria</a></div>
+        
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="AM" data-nome="amazonas">
+        <header class="card-estado-header">
+          <h3>AM <span class="uf-nome">— Amazonas</span></h3>
+          <span class="uf-contagem">3/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://anoregam.org.br/" target="_blank" rel="noopener">https://anoregam.org.br/</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjam.jus.br" target="_blank" rel="noopener">https://www.tjam.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjam.jus.br/index.php/cgj-publicacoes/cgj-atos/provimentos" target="_blank" rel="noopener">https://www.tjam.jus.br/index.php/cgj-publicacoes/cgj-atos/provimentos</a></div>
+        
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="AP" data-nome="amapá">
+        <header class="card-estado-header">
+          <h3>AP <span class="uf-nome">— Amapá</span></h3>
+          <span class="uf-contagem">2/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-critical">Não localizada</span>
+        </div>
+        <div class="fonte-url"><span class="sem-url">— sem URL candidata —</span></div>
+        <p class="nota">Não localizado site oficial ativo (CNPJ existe, sem site encontrado).</p>
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjap.jus.br" target="_blank" rel="noopener">https://www.tjap.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjap.jus.br/corregedoria" target="_blank" rel="noopener">https://www.tjap.jus.br/corregedoria</a></div>
+        
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="BA" data-nome="bahia">
+        <header class="card-estado-header">
+          <h3>BA <span class="uf-nome">— Bahia</span></h3>
+          <span class="uf-contagem">3/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.anoregba.org.br" target="_blank" rel="noopener">https://www.anoregba.org.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjba.jus.br" target="_blank" rel="noopener">https://www.tjba.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjba.jus.br/corregedoria" target="_blank" rel="noopener">https://www.tjba.jus.br/corregedoria</a></div>
+        
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="CE" data-nome="ceará">
+        <header class="card-estado-header">
+          <h3>CE <span class="uf-nome">— Ceará</span></h3>
+          <span class="uf-contagem">3/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.anoregce.org.br" target="_blank" rel="noopener">https://www.anoregce.org.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjce.jus.br" target="_blank" rel="noopener">https://www.tjce.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjce.jus.br/corregedoria" target="_blank" rel="noopener">https://www.tjce.jus.br/corregedoria</a></div>
+        
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="DF" data-nome="distrito federal">
+        <header class="card-estado-header">
+          <h3>DF <span class="uf-nome">— Distrito Federal</span></h3>
+          <span class="uf-contagem">3/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="http://www.anoregdf.com.br" target="_blank" rel="noopener">http://www.anoregdf.com.br</a></div>
+        <p class="nota">Site só respondeu via HTTP (erro de certificado em HTTPS).</p>
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjdft.jus.br" target="_blank" rel="noopener">https://www.tjdft.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjdft.jus.br/publicacoes/provimentos" target="_blank" rel="noopener">https://www.tjdft.jus.br/publicacoes/provimentos</a></div>
+        
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="ES" data-nome="espírito santo">
+        <header class="card-estado-header">
+          <h3>ES <span class="uf-nome">— Espírito Santo</span></h3>
+          <span class="uf-contagem">3/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.sinoreg-es.org.br" target="_blank" rel="noopener">https://www.sinoreg-es.org.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjes.jus.br" target="_blank" rel="noopener">https://www.tjes.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjes.jus.br/corregedoria" target="_blank" rel="noopener">https://www.tjes.jus.br/corregedoria</a></div>
+        
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="GO" data-nome="goiás">
+        <header class="card-estado-header">
+          <h3>GO <span class="uf-nome">— Goiás</span></h3>
+          <span class="uf-contagem">1/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.anoreggo.com.br" target="_blank" rel="noopener">https://www.anoreggo.com.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-warning">Confirmar manualmente</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjgo.jus.br" target="_blank" rel="noopener">https://www.tjgo.jus.br</a></div>
+        <p class="nota">Domínio bloqueou a checagem automatizada (HTTP 403 — provável proteção anti-bot); abrir manualmente no navegador para confirmar.</p>
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-warning">Confirmar manualmente</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjgo.jus.br/index.php/91-corregedoria/publicacoes/356-provimentos-corregedoria" target="_blank" rel="noopener">https://www.tjgo.jus.br/index.php/91-corregedoria/publicacoes/356-provimentos-corregedoria</a></div>
+        <p class="nota">Domínio bloqueou a checagem automatizada (HTTP 403 — provável proteção anti-bot); abrir manualmente no navegador para confirmar.</p>
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="MA" data-nome="maranhão">
+        <header class="card-estado-header">
+          <h3>MA <span class="uf-nome">— Maranhão</span></h3>
+          <span class="uf-contagem">3/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://anoregma.org.br" target="_blank" rel="noopener">https://anoregma.org.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjma.jus.br" target="_blank" rel="noopener">https://www.tjma.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjma.jus.br/corregedoria" target="_blank" rel="noopener">https://www.tjma.jus.br/corregedoria</a></div>
+        
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="MG" data-nome="minas gerais">
+        <header class="card-estado-header">
+          <h3>MG <span class="uf-nome">— Minas Gerais</span></h3>
+          <span class="uf-contagem">3/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://serjus.com.br" target="_blank" rel="noopener">https://serjus.com.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjmg.jus.br" target="_blank" rel="noopener">https://www.tjmg.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjmg.jus.br/portal-tjmg/institucional/corregedoria/" target="_blank" rel="noopener">https://www.tjmg.jus.br/portal-tjmg/institucional/corregedoria/</a></div>
+        
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="MS" data-nome="mato grosso do sul">
+        <header class="card-estado-header">
+          <h3>MS <span class="uf-nome">— Mato Grosso do Sul</span></h3>
+          <span class="uf-contagem">3/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.anoregms.org.br" target="_blank" rel="noopener">https://www.anoregms.org.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjms.jus.br" target="_blank" rel="noopener">https://www.tjms.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjms.jus.br/corregedoria" target="_blank" rel="noopener">https://www.tjms.jus.br/corregedoria</a></div>
+        
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="MT" data-nome="mato grosso">
+        <header class="card-estado-header">
+          <h3>MT <span class="uf-nome">— Mato Grosso</span></h3>
+          <span class="uf-contagem">3/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.anoregmt.org.br" target="_blank" rel="noopener">https://www.anoregmt.org.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjmt.jus.br" target="_blank" rel="noopener">https://www.tjmt.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjmt.jus.br/corregedoria" target="_blank" rel="noopener">https://www.tjmt.jus.br/corregedoria</a></div>
+        
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="PA" data-nome="pará">
+        <header class="card-estado-header">
+          <h3>PA <span class="uf-nome">— Pará</span></h3>
+          <span class="uf-contagem">2/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://cartoriosdopara.com.br" target="_blank" rel="noopener">https://cartoriosdopara.com.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjpa.jus.br" target="_blank" rel="noopener">https://www.tjpa.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-warning">Confirmar manualmente</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjpa.jus.br/PortalExterno/institucional/Corregedoria-Geral-de-Justica/659290-provimentos.xhtml" target="_blank" rel="noopener">https://www.tjpa.jus.br/PortalExterno/institucional/Corregedoria-Geral-de-Justica/659290-provimentos.xhtml</a></div>
+        <p class="nota">Página retornou erro 500 no momento do teste (aplicação JSF sensível a sessão); confirmar manualmente e, se persistir, usar a home do TJPA como ponto de partida.</p>
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="PB" data-nome="paraíba">
+        <header class="card-estado-header">
+          <h3>PB <span class="uf-nome">— Paraíba</span></h3>
+          <span class="uf-contagem">1/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.anoregpb.org.br" target="_blank" rel="noopener">https://www.anoregpb.org.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-warning">Confirmar manualmente</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjpb.jus.br" target="_blank" rel="noopener">https://www.tjpb.jus.br</a></div>
+        <p class="nota">Domínio bloqueou a checagem automatizada (HTTP 403 — provável proteção anti-bot); abrir manualmente no navegador para confirmar.</p>
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-warning">Confirmar manualmente</span>
+        </div>
+        <div class="fonte-url"><a href="https://corregedoria.tjpb.jus.br/provimentos-da-corregedoria/" target="_blank" rel="noopener">https://corregedoria.tjpb.jus.br/provimentos-da-corregedoria/</a></div>
+        <p class="nota">Domínio bloqueou a checagem automatizada (HTTP 403 — provável proteção anti-bot); abrir manualmente no navegador para confirmar.</p>
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="PE" data-nome="pernambuco">
+        <header class="card-estado-header">
+          <h3>PE <span class="uf-nome">— Pernambuco</span></h3>
+          <span class="uf-contagem">2/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-critical">Não localizada</span>
+        </div>
+        <div class="fonte-url"><span class="sem-url">— sem URL candidata —</span></div>
+        <p class="nota">Não localizado site oficial ativo (DNS não resolve; associação pode ter mudado de canal).</p>
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjpe.jus.br" target="_blank" rel="noopener">https://www.tjpe.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://portal.tjpe.jus.br/web/corregedoria/atos-normativos/provimentos" target="_blank" rel="noopener">https://portal.tjpe.jus.br/web/corregedoria/atos-normativos/provimentos</a></div>
+        
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="PI" data-nome="piauí">
+        <header class="card-estado-header">
+          <h3>PI <span class="uf-nome">— Piauí</span></h3>
+          <span class="uf-contagem">3/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://anoregpi.org.br" target="_blank" rel="noopener">https://anoregpi.org.br</a></div>
+        <p class="nota">Site só respondeu sem o prefixo &#x27;www&#x27; (certificado não cobre www.).</p>
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjpi.jus.br" target="_blank" rel="noopener">https://www.tjpi.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjpi.jus.br/portaltjpi/corregedoria/provimentos/" target="_blank" rel="noopener">https://www.tjpi.jus.br/portaltjpi/corregedoria/provimentos/</a></div>
+        
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="PR" data-nome="paraná">
+        <header class="card-estado-header">
+          <h3>PR <span class="uf-nome">— Paraná</span></h3>
+          <span class="uf-contagem">3/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.anoregpr.org.br" target="_blank" rel="noopener">https://www.anoregpr.org.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjpr.jus.br" target="_blank" rel="noopener">https://www.tjpr.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjpr.jus.br/corregedoria" target="_blank" rel="noopener">https://www.tjpr.jus.br/corregedoria</a></div>
+        
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="RJ" data-nome="rio de janeiro">
+        <header class="card-estado-header">
+          <h3>RJ <span class="uf-nome">— Rio de Janeiro</span></h3>
+          <span class="uf-contagem">3/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.anoregrj.com.br" target="_blank" rel="noopener">https://www.anoregrj.com.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjrj.jus.br" target="_blank" rel="noopener">https://www.tjrj.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjrj.jus.br/corregedoria" target="_blank" rel="noopener">https://www.tjrj.jus.br/corregedoria</a></div>
+        <p class="nota">Existe também um subdomínio dedicado: https://cgj.tjrj.jus.br/ — comparar as duas antes de ativar.</p>
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="RN" data-nome="rio grande do norte">
+        <header class="card-estado-header">
+          <h3>RN <span class="uf-nome">— Rio Grande do Norte</span></h3>
+          <span class="uf-contagem">1/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.anoregrn.org.br" target="_blank" rel="noopener">https://www.anoregrn.org.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-warning">Confirmar manualmente</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjrn.jus.br" target="_blank" rel="noopener">https://www.tjrn.jus.br</a></div>
+        <p class="nota">Domínio bloqueou a checagem automatizada (HTTP 403 — provável proteção anti-bot); abrir manualmente no navegador para confirmar.</p>
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-warning">Confirmar manualmente</span>
+        </div>
+        <div class="fonte-url"><a href="https://corregedoria.tjrn.jus.br/" target="_blank" rel="noopener">https://corregedoria.tjrn.jus.br/</a></div>
+        <p class="nota">Domínio bloqueou a checagem automatizada (HTTP 403 — provável proteção anti-bot); abrir manualmente no navegador para confirmar.</p>
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="RO" data-nome="rondônia">
+        <header class="card-estado-header">
+          <h3>RO <span class="uf-nome">— Rondônia</span></h3>
+          <span class="uf-contagem">2/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-critical">Não localizada</span>
+        </div>
+        <div class="fonte-url"><span class="sem-url">— sem URL candidata —</span></div>
+        <p class="nota">Não localizado site oficial ativo (DNS não resolve; associação pode ter mudado de canal).</p>
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjro.jus.br" target="_blank" rel="noopener">https://www.tjro.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjro.jus.br/corregedoria" target="_blank" rel="noopener">https://www.tjro.jus.br/corregedoria</a></div>
+        
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="RR" data-nome="roraima">
+        <header class="card-estado-header">
+          <h3>RR <span class="uf-nome">— Roraima</span></h3>
+          <span class="uf-contagem">2/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-critical">Não localizada</span>
+        </div>
+        <div class="fonte-url"><span class="sem-url">— sem URL candidata —</span></div>
+        <p class="nota">Não localizado site oficial.</p>
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjrr.jus.br" target="_blank" rel="noopener">https://www.tjrr.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjrr.jus.br/index.php/correicoes-judiciais/109-corregedoria-geral" target="_blank" rel="noopener">https://www.tjrr.jus.br/index.php/correicoes-judiciais/109-corregedoria-geral</a></div>
+        
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="RS" data-nome="rio grande do sul">
+        <header class="card-estado-header">
+          <h3>RS <span class="uf-nome">— Rio Grande do Sul</span></h3>
+          <span class="uf-contagem">3/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.anoregrs.org.br" target="_blank" rel="noopener">https://www.anoregrs.org.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjrs.jus.br" target="_blank" rel="noopener">https://www.tjrs.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjrs.jus.br/novo/institucional/administracao/corregedoria-geral-da-justica/" target="_blank" rel="noopener">https://www.tjrs.jus.br/novo/institucional/administracao/corregedoria-geral-da-justica/</a></div>
+        
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="SC" data-nome="santa catarina">
+        <header class="card-estado-header">
+          <h3>SC <span class="uf-nome">— Santa Catarina</span></h3>
+          <span class="uf-contagem">3/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://anoregsc.org.br" target="_blank" rel="noopener">https://anoregsc.org.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjsc.jus.br" target="_blank" rel="noopener">https://www.tjsc.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjsc.jus.br/corregedoria" target="_blank" rel="noopener">https://www.tjsc.jus.br/corregedoria</a></div>
+        
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="SE" data-nome="sergipe">
+        <header class="card-estado-header">
+          <h3>SE <span class="uf-nome">— Sergipe</span></h3>
+          <span class="uf-contagem">3/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.anoregse.org.br" target="_blank" rel="noopener">https://www.anoregse.org.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjse.jus.br" target="_blank" rel="noopener">https://www.tjse.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjse.jus.br/corregedoria" target="_blank" rel="noopener">https://www.tjse.jus.br/corregedoria</a></div>
+        
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="SP" data-nome="são paulo">
+        <header class="card-estado-header">
+          <h3>SP <span class="uf-nome">— São Paulo</span></h3>
+          <span class="uf-contagem">3/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.anoregsp.org.br/" target="_blank" rel="noopener">https://www.anoregsp.org.br/</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjsp.jus.br" target="_blank" rel="noopener">https://www.tjsp.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjsp.jus.br/corregedoria" target="_blank" rel="noopener">https://www.tjsp.jus.br/corregedoria</a></div>
+        
+      </div>
+      </article>
+
+      <article class="card card-estado" data-uf="TO" data-nome="tocantins">
+        <header class="card-estado-header">
+          <h3>TO <span class="uf-nome">— Tocantins</span></h3>
+          <span class="uf-contagem">3/3 confirmadas</span>
+        </header>
+        
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Anoreg seccional</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.anoregto.com.br" target="_blank" rel="noopener">https://www.anoregto.com.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Tribunal de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://www.tjto.jus.br" target="_blank" rel="noopener">https://www.tjto.jus.br</a></div>
+        
+      </div>
+
+      <div class="fonte-row">
+        <div class="fonte-row-main">
+          <span class="fonte-tipo">Corregedoria Geral de Justiça</span>
+          <span class="pill pill-success">Confirmada</span>
+        </div>
+        <div class="fonte-url"><a href="https://corregedoria.tjto.jus.br/cidadao/legislacao-e-normas/atos-normativos" target="_blank" rel="noopener">https://corregedoria.tjto.jus.br/cidadao/legislacao-e-normas/atos-normativos</a></div>
+        
+      </div>
+      </article>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <p>
+    Gerado automaticamente a partir de <code>config/sources.yaml</code> no repositório
+    do projeto. Para sugerir correções, edite o arquivo diretamente ou avise o time
+    técnico com a UF e a URL correta.
+  </p>
+</footer>
+
+<script>
+  const busca = document.getElementById('busca');
+  const cards = Array.from(document.querySelectorAll('.card-estado'));
+  busca.addEventListener('input', () => {
+    const termo = busca.value.trim().toLowerCase();
+    for (const card of cards) {
+      const uf = card.dataset.uf.toLowerCase();
+      const nome = card.dataset.nome;
+      const visivel = !termo || uf.includes(termo) || nome.includes(termo);
+      card.classList.toggle('hidden', !visivel);
+    }
+  });
+</script>

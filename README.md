@@ -38,10 +38,11 @@ específicos. Custo estimado: **menos de US$ 3/mês** para o ciclo completo.
 1. **Secret no GitHub**: `ANTHROPIC_API_KEY` (Settings → Secrets → Actions).
 2. **Streamlit Community Cloud**: conectar este repositório, apontar para
    `app.py`.
-3. **Mapear as fontes estaduais**: `config/sources.yaml` tem só um exemplo
-   (SP) preenchido — ver `TODO_FONTES_ESTADUAIS.md` para o checklist de
-   pesquisa das ~80 URLs restantes (Anoreg seccional + TJ + Corregedoria de
-   cada UF).
+3. **Validação jurídica das fontes**: as 87 fontes (nacionais + estaduais)
+   já estão mapeadas em `config/sources.yaml` — 75 confirmadas automaticamente,
+   12 pendentes de confirmação manual. Ver `docs/validacao_fontes.html` (o
+   documento gerado para revisão do time jurídico) e `TODO_FONTES_ESTADUAIS.md`
+   para o detalhamento por estado.
 
 ## Rodando localmente
 
@@ -63,8 +64,11 @@ streamlit run app.py
 - [x] Persistência com deduplicação
 - [x] Painel de triagem (Streamlit)
 - [x] Agendamento quinzenal (GitHub Actions)
-- [x] Fontes nacionais/legislativas mapeadas (CNJ, Anoreg-BR, IRIB,
+- [x] Fontes nacionais/legislativas mapeadas e testadas (CNJ, Anoreg-BR, IRIB,
       Arpen-Brasil, Colégio Notarial do Brasil, Planalto)
-- [ ] Fontes estaduais — 1 de 27+DF mapeada (SP, parcial); restante pendente
-      de pesquisa (ver `TODO_FONTES_ESTADUAIS.md`)
-- [ ] Validação em produção do primeiro ciclo real
+- [x] Fontes estaduais mapeadas — 26 estados + DF, 87 fontes no total (75
+      confirmadas automaticamente, 12 pendentes de confirmação manual —
+      ver `docs/validacao_fontes.html` e `TODO_FONTES_ESTADUAIS.md`)
+- [ ] Validação jurídica das fontes pendentes de confirmação manual
+- [ ] Validação em produção do primeiro ciclo real (depende de
+      `ANTHROPIC_API_KEY` configurada)
