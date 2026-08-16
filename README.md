@@ -43,6 +43,11 @@ como `pertinente` aqui e gera sugestões de pauta para Instagram. Requer o
 secret `PEDIDO02_DISPATCH_TOKEN` (PAT com permissão de disparar
 `repository_dispatch` no repositório do Pedido 02) configurado aqui.
 
+> 📋 **Guia passo a passo da configuração** (chave da Anthropic + tokens do
+> GitHub + secrets nos dois repositórios):
+> [`CONFIGURACAO_CREDENCIAIS.md`](https://github.com/Dex057/automacao-conteudo-scraping/blob/main/docs/CONFIGURACAO_CREDENCIAIS.md)
+> no repositório do Pedido 02.
+
 ## Configuração necessária
 
 1. **Secrets no GitHub**: `ANTHROPIC_API_KEY` e `PEDIDO02_DISPATCH_TOKEN`
