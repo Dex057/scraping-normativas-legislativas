@@ -39,3 +39,15 @@ jobs:
           git add data/normativas.db
           git diff --cached --quiet || git commit -m "chore: atualiza digest de normativas [skip ci]"
           git push
+
+      - name: Acionar o Pedido 02 (geração de sugestões de conteúdo)
+        # Encadeamento por evento em vez de cron próprio no Pedido 02: ele só faz
+        # sentido rodar depois que este ciclo termina, com achados novos já
+        # persistidos. Requer um PAT com permissão de repository_dispatch no
+        # repositório de destino, armazenado como secret PEDIDO02_DISPATCH_TOKEN.
+        run: |
+          curl -sf -X POST \
+            -H "Authorization: Bearer ${{ secrets.PEDIDO02_DISPATCH_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/Dex057/automacao-conteudo-scraping/dispatches \
+            -d '{"event_type":"pedido01_ciclo_finalizado"}'

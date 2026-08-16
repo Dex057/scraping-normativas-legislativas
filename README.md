@@ -33,9 +33,20 @@ específicos. Custo estimado: **menos de US$ 3/mês** para o ciclo completo.
   repositório — cada push (incluindo o commit automático do bot) dispara um
   redeploy automático, então o painel sempre reflete o último ciclo.
 
+## Encadeamento com o Pedido 02
+
+Ao final do ciclo, o workflow dispara um `repository_dispatch` para o
+repositório do
+[Pedido 02](https://github.com/Dex057/automacao-conteudo-scraping)
+(inteligência de conteúdo para redes sociais), que lê os achados marcados
+como `pertinente` aqui e gera sugestões de pauta para Instagram. Requer o
+secret `PEDIDO02_DISPATCH_TOKEN` (PAT com permissão de disparar
+`repository_dispatch` no repositório do Pedido 02) configurado aqui.
+
 ## Configuração necessária
 
-1. **Secret no GitHub**: `ANTHROPIC_API_KEY` (Settings → Secrets → Actions).
+1. **Secrets no GitHub**: `ANTHROPIC_API_KEY` e `PEDIDO02_DISPATCH_TOKEN`
+   (Settings → Secrets → Actions).
 2. **Streamlit Community Cloud**: conectar este repositório, apontar para
    `app.py`.
 3. **Validação jurídica das fontes**: as 87 fontes (nacionais + estaduais)
