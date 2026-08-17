@@ -45,9 +45,15 @@ jobs:
         # sentido rodar depois que este ciclo termina, com achados novos já
         # persistidos. Requer um PAT com permissão de repository_dispatch no
         # repositório de destino, armazenado como secret PEDIDO02_DISPATCH_TOKEN.
+        # Opcional: se o secret ainda não estiver configurado, este passo é
+        # pulado (não bloqueia nem falha o ciclo de coleta do Pedido 01).
+        if: ${{ env.PEDIDO02_DISPATCH_TOKEN != '' }}
+        env:
+          PEDIDO02_DISPATCH_TOKEN: ${{ secrets.PEDIDO02_DISPATCH_TOKEN }}
+        continue-on-error: true
         run: |
           curl -sf -X POST \
-            -H "Authorization: Bearer ${{ secrets.PEDIDO02_DISPATCH_TOKEN }}" \
+            -H "Authorization: Bearer ${PEDIDO02_DISPATCH_TOKEN}" \
             -H "Accept: application/vnd.github+json" \
             https://api.github.com/repos/Dex057/automacao-conteudo-scraping/dispatches \
             -d '{"event_type":"pedido01_ciclo_finalizado"}'

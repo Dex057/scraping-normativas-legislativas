@@ -39,9 +39,11 @@ Ao final do ciclo, o workflow dispara um `repository_dispatch` para o
 repositório do
 [Pedido 02](https://github.com/Dex057/automacao-conteudo-scraping)
 (inteligência de conteúdo para redes sociais), que lê os achados marcados
-como `pertinente` aqui e gera sugestões de pauta para Instagram. Requer o
+como `pertinente` aqui e gera sugestões de pauta para Instagram. Usa o
 secret `PEDIDO02_DISPATCH_TOKEN` (PAT com permissão de disparar
-`repository_dispatch` no repositório do Pedido 02) configurado aqui.
+`repository_dispatch` no repositório do Pedido 02) configurado aqui. Esse
+passo é **opcional**: sem o secret configurado, ele é pulado automaticamente
+e não bloqueia nem falha o ciclo de coleta do Pedido 01.
 
 > 📋 **Guia passo a passo da configuração** (chave da Anthropic + tokens do
 > GitHub + secrets nos dois repositórios):
@@ -50,8 +52,10 @@ secret `PEDIDO02_DISPATCH_TOKEN` (PAT com permissão de disparar
 
 ## Configuração necessária
 
-1. **Secrets no GitHub**: `ANTHROPIC_API_KEY` e `PEDIDO02_DISPATCH_TOKEN`
-   (Settings → Secrets → Actions).
+1. **Secrets no GitHub** (Settings → Secrets → Actions): `ANTHROPIC_API_KEY`
+   (obrigatório, sem ele a extração falha) e `PEDIDO02_DISPATCH_TOKEN`
+   (opcional — só necessário quando o encadeamento com o Pedido 02 for
+   ativado; até lá o passo correspondente é pulado automaticamente).
 2. **Streamlit Community Cloud**: conectar este repositório, apontar para
    `app.py`.
 3. **Validação jurídica das fontes**: as 87 fontes (nacionais + estaduais)
