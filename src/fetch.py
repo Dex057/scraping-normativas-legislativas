@@ -24,6 +24,16 @@ USER_AGENT = (
     "coleta quinzenal de atos normativos para curadoria interna"
 )
 
+# Cabeçalhos adicionais para parecer mais próximo de um navegador real — vários
+# sites de tribunais/associações (ex.: TJMG, TJES, Anoreg-BA) devolvem 403 a
+# requisições sem esses headers, provavelmente por WAF/CDN filtrando tráfego
+# de datacenter (o range de IP dos runners do GitHub Actions é conhecido).
+# Isso não resolve todo bloqueio de WAF, mas reduz falsos positivos.
+EXTRA_HEADERS = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
+}
+
 # Tamanho máximo de texto (em caracteres) enviado ao modelo por página.
 # Evita páginas gigantes (ex.: bases de legislação completas) estourarem
 # custo/tempo de extração. ~40k chars ~ 10k tokens, ainda barato no Haiku.
@@ -71,8 +81,8 @@ def _limpar_html(html: str, base_url: str) -> str:
     wait=wait_exponential(multiplier=1, min=2, max=20),
     retry=retry_if_exception_type((httpx.TransportError, httpx.HTTPStatusError)),
 )
-def _buscar_estatico(url: str, timeout: float = 20.0) -> str:
-    headers = {"User-Agent": USER_AGENT}
+def _buscar_estatico(url: str, timeout: float = 30.0) -> str:
+    headers = {"User-Agent": USER_AGENT, **EXTRA_HEADERS}
     with httpx.Client(headers=headers, timeout=timeout, follow_redirects=True, http2=True) as client:
         resp = client.get(url)
         resp.raise_for_status()
