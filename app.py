@@ -93,31 +93,37 @@ for _, achado in filtrado.iterrows():
     with st.container(border=True):
         cabecalho = f"**{achado['titulo']}**"
         st.markdown(cabecalho)
+        # Campos opcionais (estado, tipo_ato, data_publicacao) costumam vir NULL
+        # do SQLite. O pandas 3.x representa isso como NaN mesmo em colunas de
+        # dtype "str" — NaN é "truthy" (bool(nan) é True) e não é str, então
+        # `filter(None, [...])` não filtra e `" · ".join(...)` quebra. Usa
+        # pd.notna() explicitamente em vez de confiar em truthiness.
         meta = " · ".join(
-            filter(
-                None,
-                [
-                    achado["fonte_nome"],
-                    achado["estado"],
-                    achado["tipo_ato"],
-                    achado["data_publicacao"],
-                ],
-            )
+            str(valor)
+            for valor in [
+                achado["fonte_nome"],
+                achado["estado"],
+                achado["tipo_ato"],
+                achado["data_publicacao"],
+            ]
+            if pd.notna(valor) and str(valor).strip()
         )
         st.caption(meta)
-        if achado["resumo"]:
+        if pd.notna(achado["resumo"]) and str(achado["resumo"]).strip():
             st.write(achado["resumo"])
         st.markdown(f"[Ver fonte original]({achado['link']})")
+
+        classificacao_atual = achado["classificacao"] if pd.notna(achado["classificacao"]) else None
 
         col_x, col_y, col_z, col_status = st.columns([1, 1, 2, 1])
         with col_x:
             if st.button("✅ Pertinente", key=f"pert_{achado['id']}"):
-                db.atualizar_status(int(achado["id"]), "pertinente", achado["classificacao"], "karina")
+                db.atualizar_status(int(achado["id"]), "pertinente", classificacao_atual, "karina")
                 st.cache_data.clear()
                 st.rerun()
         with col_y:
             if st.button("❌ Não pertinente", key=f"npert_{achado['id']}"):
-                db.atualizar_status(int(achado["id"]), "nao_pertinente", achado["classificacao"], "karina")
+                db.atualizar_status(int(achado["id"]), "nao_pertinente", classificacao_atual, "karina")
                 st.cache_data.clear()
                 st.rerun()
         with col_status:
