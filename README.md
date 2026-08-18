@@ -8,7 +8,7 @@ disponibiliza um painel de triagem para validação manual.
 
 ```
 config/sources.yaml      → lista de fontes monitoradas (nacional + 27 UF + DF)
-src/fetch.py              → busca a página e limpa o HTML (preserva links)
+src/fetch.py              → busca a página (HTML ou API) e limpa/estrutura o conteúdo
 src/extract.py            → Claude Haiku 4.5 extrai achados estruturados (JSON Schema)
 src/db.py                 → SQLite: achados, execuções, dedup, status de triagem
 src/orchestrator.py       → roda o ciclo completo (chamado pelo GitHub Actions)
@@ -24,6 +24,17 @@ página); `extract.py` manda o texto limpo para o Claude Haiku 4.5, que devolve
 os achados já estruturados via *structured outputs*. Isso é resiliente a
 mudanças de layout dos sites e elimina a necessidade de 80+ parsers
 específicos. Custo estimado: **menos de US$ 3/mês** para o ciclo completo.
+
+**Coleta híbrida (`modo` em `sources.yaml`):** 18 das 87 fontes têm API JSON
+confirmada por trás do site (`modo: api_json`) — CNJ (`atos.cnj.jus.br/api/atos`,
+formato `cnj_atos`, ato oficial já estruturado, pula o Claude) e 17 fontes em
+WordPress (`formato: wp`, endpoint `wp-json/wp/v2/...`, ainda passa pelo Claude
+para julgar relevância, só que a partir de JSON em vez de HTML). As demais
+fontes seguem em `modo: estatico` (scraping + IA, o caminho original). Ver o
+comentário no topo de `config/sources.yaml` para o critério de cada modo —
+importante: o endpoint `/wp-json/` responder 200 **não** garante que
+`wp/v2/posts` funcione; várias fontes testadas tinham a rota de dados
+desabilitada ou desatualizada apesar do discovery root responder normalmente.
 
 ## Persistência e deploy
 

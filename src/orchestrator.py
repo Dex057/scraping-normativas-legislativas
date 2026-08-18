@@ -20,8 +20,8 @@ from pathlib import Path
 import yaml
 
 from . import db
-from .extract import extrair_achados
-from .fetch import buscar_pagina
+from .extract import achados_de_atos_cnj, extrair_achados
+from .fetch import buscar_atos_cnj, buscar_pagina
 
 logging.basicConfig(
     level=logging.INFO,
@@ -41,11 +41,57 @@ def carregar_fontes() -> list[dict]:
     return ativas
 
 
+def _processar_fonte_cnj_atos(fonte: dict, execucao_id: int) -> tuple[bool, int]:
+    """Caminho dedicado para fontes com formato: cnj_atos — a API interna
+    do CNJ já devolve atos oficiais estruturados, então pula extract.py/Claude
+    inteiramente (ver achados_de_atos_cnj)."""
+    fonte_id = fonte["id"]
+    try:
+        atos = buscar_atos_cnj(fonte["endpoint"])
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Falha ao buscar API do CNJ para fonte '%s': %s", fonte_id, exc)
+        db.registrar_falha(execucao_id, fonte_id, str(exc))
+        return False, 0
+
+    achados = achados_de_atos_cnj(
+        atos,
+        fonte_id=fonte_id,
+        fonte_nome=fonte["nome"],
+        categoria=fonte["categoria"],
+        estado=fonte.get("estado"),
+    )
+
+    novos = 0
+    for achado in achados:
+        if db.salvar_achado(achado, execucao_id):
+            novos += 1
+
+    logger.info(
+        "Fonte '%s' (api cnj_atos): %d atos na janela, %d novos (dedup aplicado)",
+        fonte_id, len(achados), novos,
+    )
+    return True, novos
+
+
 def processar_fonte(fonte: dict, execucao_id: int) -> tuple[bool, int]:
     """Processa uma fonte. Retorna (sucesso, quantidade_de_achados_novos)."""
     fonte_id = fonte["id"]
+    modo = fonte.get("modo", "estatico")
+
+    if modo == "api_json" and not fonte.get("endpoint"):
+        db.registrar_falha(execucao_id, fonte_id, "modo=api_json sem 'endpoint' configurado em sources.yaml")
+        return False, 0
+
+    if modo == "api_json" and fonte.get("formato") == "cnj_atos":
+        return _processar_fonte_cnj_atos(fonte, execucao_id)
+
+    # Para modo=api_json (formato wp), a URL a buscar é o endpoint da API,
+    # não a página institucional cadastrada em "url" (mantida só como
+    # referência humana em sources.yaml).
+    url_busca = fonte.get("endpoint") if modo == "api_json" else fonte["url"]
+
     try:
-        conteudo = buscar_pagina(fonte["url"], modo=fonte.get("modo", "estatico"))
+        conteudo = buscar_pagina(url_busca, modo=modo)
     except Exception as exc:  # noqa: BLE001 — falha de uma fonte não pode derrubar o ciclo
         logger.error("Falha ao buscar fonte '%s': %s", fonte_id, exc)
         db.registrar_falha(execucao_id, fonte_id, str(exc))

@@ -157,3 +157,56 @@ def extrair_achados(
             )
         )
     return achados
+
+
+_TITULO_MAX = 140
+
+
+def achados_de_atos_cnj(
+    atos: list[dict],
+    *,
+    fonte_id: str,
+    fonte_nome: str,
+    categoria: str,
+    estado: Optional[str],
+) -> list[Achado]:
+    """Converte os dicts crus de fetch.buscar_atos_cnj() em Achado, sem
+    chamar o modelo — todo item que a API do CNJ devolve já é, por
+    definição, um ato normativo publicado (não uma notícia a filtrar), então
+    não há decisão de relevância a delegar ao Claude aqui.
+    """
+    achados: list[Achado] = []
+    for ato in atos:
+        link = (ato.get("link") or "").strip()
+        tipo = (ato.get("tipo") or "").strip()
+        numero = ato.get("numero")
+        if not link or not tipo:
+            continue
+
+        identificacao = f"{tipo} nº {numero}" if numero else tipo
+        ementa = (ato.get("ementa") or "").strip()
+        if ementa:
+            resumo_curto = ementa if len(ementa) <= _TITULO_MAX else ementa[:_TITULO_MAX].rsplit(" ", 1)[0] + "…"
+            titulo = f"{identificacao} — {resumo_curto}"
+        else:
+            titulo = identificacao
+
+        situacao = (ato.get("situacao") or "").strip()
+        resumo = ementa or None
+        if resumo and situacao:
+            resumo = f"{resumo} [Situação: {situacao}]"
+
+        achados.append(
+            Achado(
+                fonte_id=fonte_id,
+                fonte_nome=fonte_nome,
+                categoria=categoria,
+                estado=estado,
+                titulo=titulo,
+                data_publicacao=ato.get("data_publicacao"),
+                tipo_ato=tipo or None,
+                resumo=resumo,
+                link=link,
+            )
+        )
+    return achados

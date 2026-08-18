@@ -5,11 +5,26 @@
 #   nome:        nome legível da fonte
 #   categoria:   nacional_extrajudicial | legislativo | estadual_anoreg | estadual_tj | estadual_corregedoria
 #   estado:      sigla UF (só para categorias estaduais; ausente para nacionais)
-#   url:         página a ser varrida (null quando a fonte ainda não foi localizada)
+#   url:         página institucional de referência (mantida mesmo quando a coleta usa
+#                "endpoint" — é o link mostrado a um humano que queira abrir a fonte)
 #   ativo:       true/false — false = pendente de confirmação manual antes de ativar
-#   modo:        "estatico" (requests/BeautifulSoup) | "js" (Playwright)
+#   modo:        "estatico" (requests/BeautifulSoup) | "js" (Playwright) |
+#                "api_json" (endpoint JSON — ver "endpoint"/"formato" abaixo)
+#   endpoint:    só para modo=api_json — URL do endpoint JSON a consultar (em vez de "url")
+#   formato:     só para modo=api_json — "wp" (padrão; coleção WordPress REST, ex.:
+#                wp/v2/posts ou um Custom Post Type como wp/v2/legislacao — ainda passa
+#                pelo Claude via extract.py para julgar relevância) | "cnj_atos"
+#                (endpoint dedicado do CNJ — já é ato oficial estruturado, pula o Claude)
 #   nota:        observação da pesquisa automatizada (bloqueio, erro, ambiguidade) — ver
 #                também o documento de validação gerado para a equipe jurídica.
+#
+# Sobre modo=api_json: confirmado por teste real em 18/08/2026 para 20 das 87 fontes
+# (ver nota técnica "Rotas de Coleta"). Importante — o discovery root /wp-json/ responder
+# 200 NÃO garante que a rota de dados (wp/v2/posts) funcione: vários TJs respondem 200
+# no root mas servem HTML normal (não JSON) em wp/v2/posts, provavelmente por
+# endurecimento de segurança que desabilita a rota de conteúdo. Só as 20 fontes abaixo
+# tiveram o endpoint de dados testado e confirmado — não replicar o padrão para outras
+# fontes sem antes testar wp-json/wp/v2/posts (ou o CPT específico) diretamente.
 #
 # Gerado por scripts/gerar_sources_yaml.py a partir da pesquisa registrada em
 # TODO_FONTES_ESTADUAIS.md. Todas as fontes com ativo:false precisam de confirmação
@@ -19,11 +34,15 @@ fontes:
 - id: cnj
   nome: CNJ — Conselho Nacional de Justiça
   categoria: nacional_extrajudicial
-  url: https://www.cnj.jus.br/category/noticias/
+  url: https://atos.cnj.jus.br/atos
   ativo: true
-  modo: estatico
-  nota: Repositório oficial de atos normativos (atos.cnj.jus.br/atos) é uma SPA que carrega a tabela via
-    JS/API sob demanda e não é resolvível com Playwright simples — usando a página de notícias como alternativa.
+  modo: api_json
+  formato: cnj_atos
+  endpoint: https://atos.cnj.jus.br/api/atos
+  nota: Endpoint interno da SPA de busca de atos normativos (Provimento, Portaria etc.), não documentado
+    publicamente mas confirmado por request real em 18/08/2026 — devolve ato oficial estruturado
+    (tipo, número, data, situação, ementa, inteiro teor). Substitui a antiga fonte por scraping da
+    página de notícias, que só captava menções a atos, não os atos em si.
 - id: anoreg_br
   nome: Anoreg-BR
   categoria: nacional_extrajudicial
@@ -35,19 +54,25 @@ fontes:
   categoria: nacional_extrajudicial
   url: https://irib.org.br/noticias
   ativo: true
-  modo: estatico
+  modo: api_json
+  formato: wp
+  endpoint: https://irib.org.br/wp-json/wp/v2/posts
 - id: arpen_brasil
   nome: Arpen-Brasil
   categoria: nacional_extrajudicial
   url: https://www.arpenbrasil.org.br/noticias/
   ativo: true
-  modo: estatico
+  modo: api_json
+  formato: wp
+  endpoint: https://www.arpenbrasil.org.br/wp-json/wp/v2/posts
 - id: colegio_notarial_brasil
   nome: Colégio Notarial do Brasil - Conselho Federal
   categoria: nacional_extrajudicial
   url: https://www.notariado.org.br/noticias/
   ativo: true
-  modo: estatico
+  modo: api_json
+  formato: wp
+  endpoint: https://www.notariado.org.br/wp-json/wp/v2/posts
 - id: planalto
   nome: Portal do Planalto — Atos Normativos
   categoria: legislativo
@@ -75,14 +100,21 @@ fontes:
   estado: AC
   url: https://www.tjac.jus.br/corregedoria
   ativo: true
-  modo: estatico
+  modo: api_json
+  formato: wp
+  endpoint: https://www.tjac.jus.br/wp-json/wp/v2/posts
+  nota: TJAC roda WordPress com wp/v2/posts confirmado, mas sem CPT dedicado a legislação
+    (só arquivos/editais_judiciais). ac_tj continua em modo=estatico para não duplicar
+    coleta — os dois apontam para o mesmo domínio, então a API é site-wide.
 - id: al_anoreg
   nome: Anoreg-AL
   categoria: estadual_anoreg
   estado: AL
   url: https://www.anoreg-al.org.br
   ativo: true
-  modo: estatico
+  modo: api_json
+  formato: wp
+  endpoint: https://www.anoreg-al.org.br/wp-json/wp/v2/posts
 - id: al_tj
   nome: TJAL — página institucional
   categoria: estadual_tj
@@ -146,7 +178,9 @@ fontes:
   estado: BA
   url: https://www.anoregba.org.br
   ativo: true
-  modo: estatico
+  modo: api_json
+  formato: wp
+  endpoint: https://www.anoregba.org.br/wp-json/wp/v2/posts
 - id: ba_tj
   nome: TJBA — página institucional
   categoria: estadual_tj
@@ -167,7 +201,9 @@ fontes:
   estado: CE
   url: https://www.anoregce.org.br
   ativo: true
-  modo: estatico
+  modo: api_json
+  formato: wp
+  endpoint: https://www.anoregce.org.br/wp-json/wp/v2/posts
 - id: ce_tj
   nome: TJCE — página institucional
   categoria: estadual_tj
@@ -175,6 +211,11 @@ fontes:
   url: https://www.tjce.jus.br
   ativo: true
   modo: estatico
+  nota: wp-json/wp/v2/posts responde JSON válido, mas testado em 18/08/2026 e o item mais
+    recente tinha data de 26/03/2026 (~5 meses antes) — não reflete as notícias reais do
+    site (o scraping atual já captou itens de agosto/2026). Provavelmente esse endpoint
+    serve um blog secundário pouco usado, não o fluxo principal de notícias. Mantido em
+    modo=estatico.
 - id: ce_corregedoria
   nome: Corregedoria Geral de Justiça — CE
   categoria: estadual_corregedoria
@@ -182,6 +223,11 @@ fontes:
   url: https://www.tjce.jus.br/corregedoria
   ativo: true
   modo: estatico
+  nota: TJCE tem um CPT dedicado ("wp-json/wp/v2/legislacao") com Portarias/Provimentos da
+    CGJ-CE estruturados, mas testado em 18/08/2026 e o item mais recente é de out/2022 —
+    parece abandonado. Mantido em modo=estatico (scraping da página atual, que já capta
+    itens de 2026) para não perder cobertura. Revisar periodicamente se o CPT voltar a ser
+    alimentado.
 - id: df_anoreg
   nome: Anoreg-DF
   categoria: estadual_anoreg
@@ -210,7 +256,9 @@ fontes:
   estado: ES
   url: https://www.sinoreg-es.org.br
   ativo: true
-  modo: estatico
+  modo: api_json
+  formato: wp
+  endpoint: https://www.sinoreg-es.org.br/wp-json/wp/v2/posts
 - id: es_tj
   nome: TJES — página institucional
   categoria: estadual_tj
@@ -218,13 +266,17 @@ fontes:
   url: https://www.tjes.jus.br
   ativo: true
   modo: estatico
+  nota: TJES roda WordPress e tem wp/v2/posts funcional, mas es_corregedoria (mesmo domínio)
+    já usa esse endpoint — mantido em scraping para não duplicar coleta site-wide.
 - id: es_corregedoria
   nome: Corregedoria Geral de Justiça — ES
   categoria: estadual_corregedoria
   estado: ES
   url: https://www.tjes.jus.br/corregedoria
   ativo: true
-  modo: estatico
+  modo: api_json
+  formato: wp
+  endpoint: https://www.tjes.jus.br/wp-json/wp/v2/posts
 - id: go_anoreg
   nome: Anoreg-GO
   categoria: estadual_anoreg
@@ -256,7 +308,9 @@ fontes:
   estado: MA
   url: https://anoregma.org.br
   ativo: true
-  modo: estatico
+  modo: api_json
+  formato: wp
+  endpoint: https://anoregma.org.br/wp-json/wp/v2/posts
 - id: ma_tj
   nome: TJMA — página institucional
   categoria: estadual_tj
@@ -277,7 +331,9 @@ fontes:
   estado: MG
   url: https://serjus.com.br
   ativo: true
-  modo: estatico
+  modo: api_json
+  formato: wp
+  endpoint: https://serjus.com.br/wp-json/wp/v2/posts
 - id: mg_tj
   nome: TJMG — página institucional
   categoria: estadual_tj
@@ -298,7 +354,9 @@ fontes:
   estado: MS
   url: https://www.anoregms.org.br
   ativo: true
-  modo: estatico
+  modo: api_json
+  formato: wp
+  endpoint: https://www.anoregms.org.br/wp-json/wp/v2/posts
 - id: ms_tj
   nome: TJMS — página institucional
   categoria: estadual_tj
@@ -363,7 +421,9 @@ fontes:
   estado: PB
   url: https://www.anoregpb.org.br
   ativo: true
-  modo: estatico
+  modo: api_json
+  formato: wp
+  endpoint: https://www.anoregpb.org.br/wp-json/wp/v2/posts
 - id: pb_tj
   nome: TJPB — página institucional
   categoria: estadual_tj
@@ -432,7 +492,9 @@ fontes:
   estado: PR
   url: https://www.anoregpr.org.br
   ativo: true
-  modo: estatico
+  modo: api_json
+  formato: wp
+  endpoint: https://www.anoregpr.org.br/wp-json/wp/v2/posts
 - id: pr_tj
   nome: TJPR — página institucional
   categoria: estadual_tj
@@ -453,7 +515,9 @@ fontes:
   estado: RJ
   url: https://www.anoregrj.com.br
   ativo: true
-  modo: estatico
+  modo: api_json
+  formato: wp
+  endpoint: https://www.anoregrj.com.br/wp-json/wp/v2/posts
 - id: rj_tj
   nome: TJRJ — página institucional
   categoria: estadual_tj
@@ -544,7 +608,9 @@ fontes:
   estado: RS
   url: https://www.anoregrs.org.br
   ativo: true
-  modo: estatico
+  modo: api_json
+  formato: wp
+  endpoint: https://www.anoregrs.org.br/wp-json/wp/v2/posts
 - id: rs_tj
   nome: TJRS — página institucional
   categoria: estadual_tj
@@ -565,7 +631,9 @@ fontes:
   estado: SC
   url: https://anoregsc.org.br
   ativo: true
-  modo: estatico
+  modo: api_json
+  formato: wp
+  endpoint: https://anoregsc.org.br/wp-json/wp/v2/posts
 - id: sc_tj
   nome: TJSC — página institucional
   categoria: estadual_tj
