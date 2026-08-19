@@ -43,6 +43,14 @@ desabilitada ou desatualizada apesar do discovery root responder normalmente.
 - O painel roda no **Streamlit Community Cloud**, apontando para este
   repositório — cada push (incluindo o commit automático do bot) dispara um
   redeploy automático, então o painel sempre reflete o último ciclo.
+- **Triagem manual (`src/github_sync.py`):** o container do Streamlit clona
+  o repositório mas nunca escreve de volta por conta própria — sem
+  sincronizar explicitamente, marcar um achado como pertinente ficaria
+  preso no container efêmero e nunca chegaria no banco versionado (que é o
+  que o Pedido 02 lê). Por isso cada clique em "Pertinente"/"Não pertinente"
+  comita o banco de volta ao GitHub via Contents API, usando o secret
+  `GITHUB_WRITE_TOKEN` configurado no Streamlit (não é um secret do GitHub
+  Actions — ver `CONFIGURACAO_CREDENCIAIS.md`).
 
 ## Encadeamento com o Pedido 02
 
@@ -100,6 +108,9 @@ streamlit run app.py
 - [x] Fontes estaduais mapeadas — 26 estados + DF, 87 fontes no total (75
       confirmadas automaticamente, 12 pendentes de confirmação manual —
       ver `docs/validacao_fontes.html` e `TODO_FONTES_ESTADUAIS.md`)
+- [x] Sincronização da triagem manual de volta ao GitHub (`src/github_sync.py`)
 - [ ] Validação jurídica das fontes pendentes de confirmação manual
 - [ ] Validação em produção do primeiro ciclo real (depende de
       `ANTHROPIC_API_KEY` configurada)
+- [ ] Configurar o secret `GITHUB_WRITE_TOKEN` no Streamlit Cloud (ver
+      `CONFIGURACAO_CREDENCIAIS.md`) — sem ele a triagem não persiste

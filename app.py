@@ -7,7 +7,10 @@ o status que servirá de insumo ao Pedido 02.
 Deploy: Streamlit Community Cloud, apontando para este repositório. O banco
 (data/normativas.db) é lido diretamente do checkout do repo — não há
 servidor de banco separado; ele é atualizado pelo workflow do GitHub Actions
-a cada ciclo quinzenal e commitado de volta.
+a cada ciclo quinzenal e commitado de volta. A triagem manual feita aqui é
+sincronizada de volta ao GitHub a cada clique (ver src/github_sync.py) —
+sem isso, a classificação ficaria presa no container efêmero do Streamlit e
+nunca chegaria no banco versionado que o Pedido 02 lê.
 """
 
 from __future__ import annotations
@@ -15,11 +18,23 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from src import db
+from src import db, github_sync
 
 st.set_page_config(page_title="Digest de Normativas — Corpo Técnico", page_icon="⚖️", layout="wide")
 
 db.init_db()
+
+
+def classificar_e_sincronizar(achado_id: int, status: str, classificacao: str | None) -> None:
+    """Grava o status localmente e comita de volta ao GitHub — sem o commit,
+    a classificação nunca chega no banco que o Pedido 02 lê (ver
+    src/github_sync.py)."""
+    db.atualizar_status(achado_id, status, classificacao, "karina")
+    ok, mensagem = github_sync.commit_db_to_github(db.DB_PATH)
+    if ok:
+        st.toast("✅ " + mensagem)
+    else:
+        st.warning(mensagem)
 
 
 @st.cache_data(ttl=60)
@@ -118,12 +133,12 @@ for _, achado in filtrado.iterrows():
         col_x, col_y, col_z, col_status = st.columns([1, 1, 2, 1])
         with col_x:
             if st.button("✅ Pertinente", key=f"pert_{achado['id']}"):
-                db.atualizar_status(int(achado["id"]), "pertinente", classificacao_atual, "karina")
+                classificar_e_sincronizar(int(achado["id"]), "pertinente", classificacao_atual)
                 st.cache_data.clear()
                 st.rerun()
         with col_y:
             if st.button("❌ Não pertinente", key=f"npert_{achado['id']}"):
-                db.atualizar_status(int(achado["id"]), "nao_pertinente", classificacao_atual, "karina")
+                classificar_e_sincronizar(int(achado["id"]), "nao_pertinente", classificacao_atual)
                 st.cache_data.clear()
                 st.rerun()
         with col_status:
