@@ -70,7 +70,8 @@ def commit_db_to_github(db_path: Path) -> tuple[bool, str]:
     try:
         with httpx.Client(timeout=30) as client:
             atual = client.get(api_url, headers=headers, params={"ref": BRANCH})
-            atual.raise_for_status()
+            if atual.is_error:
+                return False, _erro_com_corpo("leitura do arquivo atual (GET)", atual)
             sha_atual = atual.json()["sha"]
 
             conteudo = base64.b64encode(db_path.read_bytes()).decode("ascii")
@@ -84,7 +85,8 @@ def commit_db_to_github(db_path: Path) -> tuple[bool, str]:
                     "branch": BRANCH,
                 },
             )
-            resp.raise_for_status()
+            if resp.is_error:
+                return False, _erro_com_corpo("gravação do commit (PUT)", resp)
         return True, "Alteração salva no repositório."
     except httpx.HTTPError as exc:
         logger.error("Falha ao sincronizar banco com o GitHub: %s", exc)
@@ -92,3 +94,20 @@ def commit_db_to_github(db_path: Path) -> tuple[bool, str]:
             f"Falha ao salvar no repositório (a alteração ficou só nesta "
             f"sessão): {exc}"
         )
+
+
+def _erro_com_corpo(etapa: str, resp: httpx.Response) -> str:
+    """Monta a mensagem de erro incluindo o corpo da resposta do GitHub —
+    o texto genérico '403 Forbidden' não diz se é permissão do token, token
+    errado, ou o repositório/branch/caminho não encontrado; o corpo da
+    resposta da API do GitHub normalmente explica qual dos dois é."""
+    try:
+        detalhe = resp.json().get("message", resp.text)
+    except Exception:
+        detalhe = resp.text
+    mensagem = (
+        f"Falha ao salvar no repositório na etapa de {etapa} "
+        f"(HTTP {resp.status_code}): {detalhe}"
+    )
+    logger.error(mensagem)
+    return mensagem
